@@ -1,7 +1,7 @@
 .root {
     width: 100vw;
     height: 100vh;
-    padding: 100px;
+    padding: 20px;
 }
 
 .display {
@@ -26,7 +26,7 @@
 }
 
 .module.from {
-    flex-basis: calc(1% * var(--progress));
+    flex-basis: calc(1% * var(--parentProgress));
     flex-shrink: 0;
 }
 
@@ -42,4 +42,9 @@
 
 .active {
     background-color: rgb(140, 87, 189);
+}
+
+.border {
+    padding: 1px;
+    background-color: green;
 }
