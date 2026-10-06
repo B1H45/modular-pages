@@ -1,7 +1,6 @@
 import { useState } from 'react'
-import './App.css'
+import './styles/App.css'
 import Display from './Display'
-import Display2 from './Display2'
 
 
 function App() {
@@ -9,8 +8,8 @@ function App() {
   return (
     <>
       <div className='root'>
-        <Display2>
-        </Display2>
+        <Display>
+        </Display>
       </div>      
     </>
   )

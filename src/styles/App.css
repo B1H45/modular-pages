@@ -19,15 +19,13 @@
     height: 100%;
     display: flex;
     position: relative;
-}
-
-.module.to {
-    flex-grow: 0;
-}
-
-.module.from {
-    flex-basis: calc(1% * var(--parentProgress));
+    flex-basis: calc(1% * var(--partition));
     flex-shrink: 0;
+}
+
+.module.end {
+    flex-grow: 1;
+    flex-basis: 0;
 }
 
 .splitter {

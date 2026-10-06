@@ -1,13 +1,8 @@
 import { useEffect, useState, useRef } from "react";
 import { Stage, Layer, Line } from "react-konva";
 
-function ModuleNode(props) {
-    let { progress, level, content, side } = props;
-    let [from, setFrom] = useState(null);
-    let [to, setTo] = useState(null);
+function ModuleNode({ obj } = props) {
     let [splitting, setSplitting] = useState(false);
-    let thisNode = useRef(this);
-
     const [mousePosition, setMousePosition] = useState({
         x: null,
         y: null,
@@ -16,109 +11,100 @@ function ModuleNode(props) {
         x: null,
         y: null,
     });
+    let thisNode = useRef(null);
+
+    const { parent, level, partition, from, to, content, children } = obj;
+    const willSplitVertically = level % 2 != 0; // Will split vertically if odd level
+    const min = 60;
 
     useEffect(() => {
         if (splitting) {
             window.addEventListener("mousemove", _updateAnimVars);
-            window.addEventListener("click", _endSplit);
+            window.addEventListener("click", endSplit);
+            window.addEventListener("contextmenu", endSplit);
         }
 
         return () => {
             window.removeEventListener("mousemove", _updateAnimVars);
+            window.removeEventListener("click", endSplit);
+            window.addEventListener("contextmenu", endSplit);
         };
     });
 
-    // constructor(progress, level, content) {
-    //     progress = progress;
-    //     from = null;
-    //     to = null;
-    //     level = level;
-    //     content = content;
-    // }
-
+    const clamp = (val, min, max) => Math.min(Math.max(min, val), max);
     const _updateAnimVars = (ev) => {
         setMousePosition({ x: ev.clientX, y: ev.clientY });
-        setSplitterPosition({
-            x: ev.clientX - thisNode.current.getBoundingClientRect().left,
-            y: 0,
-        });
-    };
-    const _endSplit = () => {
-        setSplitting(false);
-        createChild();
+        if (willSplitVertically) {
+            setSplitterPosition({
+                x: 0,
+                y: clamp(ev.clientY - thisNode.current.getBoundingClientRect().top, min, thisNode.current.getBoundingClientRect().height - min),
+            });
+        } else {
+            setSplitterPosition({
+                x: clamp(ev.clientX - thisNode.current.getBoundingClientRect().left, min, thisNode.current.getBoundingClientRect().width - min),
+                y: 0,
+            });
+        }
     };
 
-    function _beginSplit(e) {
+    let thisClass = `module ${obj.isLast() ? "end" : ""} ${
+        splitting ? "active" : ""
+    }`;
+    let thisStyle = {
+        "--level": level,
+        "--partition": partition,
+        flexDirection: "row",
+    };
+
+    let beginSplit = (e) => {
+        const enoughSpace = willSplitVertically ? thisNode.current.getBoundingClientRect().height > 2*min : thisNode.current.getBoundingClientRect().width > 2*min
         e.preventDefault();
-        console.log(e);
-        setSplitting(true);
-        _updateAnimVars(e);
-    }
+        e.stopPropagation();
 
-    function createChild(side) {
-        // setFrom(ModuleNode);
-    }
-
-    function render(side, progress) {
-        let arr = [];
-        for (let i = 0; i < 50; i++) {
-            arr.push(i);
+        if (!splitting && enoughSpace) {
+            _updateAnimVars(e);
+            setSplitting(true);
         }
+    };
 
-        //This node's properties
-        let thisClass = side == "to" ? "module to" : "module from";
-        let thisStyle = {
-            "--level": level,
-            "--progress": progress,
-            flexDirection: (level + 1) % 2 == 0 ? "column" : "row",
-        };
-        //Render an empty module
-        function _renderPlaceholder() {
-            return (
-                <div className="module" style={{ "--level": level + 1 }}></div>
+    let endSplit = () => {
+        if (splitting) {
+            console.log(splitterPosition);
+            setSplitting(false);
+            obj.createChild(
+                "from",
+                `${level} : from`,
+                Math.round(
+                    willSplitVertically
+                        ? (splitterPosition.y * 100) /
+                              thisNode.current.getBoundingClientRect().height
+                        : (splitterPosition.x * 100) /
+                              thisNode.current.getBoundingClientRect().width
+                )
             );
+            obj.createChild("to", `${level} : to`);
         }
+    };
 
-        //Render this node
-        function renderThis(inner) {
-            return (
-                <div
-                    onContextMenu={(e) => {
-                        _beginSplit(e);
-                    }}
-                    className={thisClass}
-                    style={thisStyle}
-                    ref={thisNode}
-                >
-                    {inner}
-                </div>
-            );
-        }
-
-        //If we've got any children, render them
-        // if (from || to) {
-        //     return renderThis(
-        //         <>
-        //             {from
-        //                 ? from.render("from", progress)
-        //                 : _renderPlaceholder()}
-        //             {to ? to.render("to", progress) : _renderPlaceholder()}
-        //         </>,
-        //     );
-
-        //     //If no children, render some sort of content
-        // } else if (content) {
-        //     return renderThis(
-        //         <>
-        //             {arr.map((num) => {
-        //                 return <p key={num}>{content}</p>;
-        //             })}
-        //         </>,
-        //     );
-        // }
-
-        function renderSplitter() {
-            return (
+    return (
+        <>
+            <div
+                onContextMenu={(e) => {
+                    beginSplit(e);
+                }}
+                ref={thisNode}
+                className={thisClass}
+                style={thisStyle}
+            >
+                {children.length > 0 ? (
+                    <>
+                        {children.map((child)=> {
+                            return (<ModuleNode key={child} obj={child}></ModuleNode>);
+                        })}
+                    </>
+                ) : (
+                    <div>{content}</div>
+                )}
                 <Stage
                     className={`splitter${!splitting ? " hide" : ""}`}
                     width={window.innerWidth}
@@ -128,39 +114,25 @@ function ModuleNode(props) {
                         <Line
                             x={splitterPosition.x}
                             y={splitterPosition.y}
-                            points={[0, 0, 0, window.innerHeight]}
+                            points={[
+                                0,
+                                0,
+                                willSplitVertically
+                                    ? thisNode.current?.getBoundingClientRect()
+                                          .width ?? 0
+                                    : 0,
+                                !willSplitVertically
+                                    ? thisNode.current?.getBoundingClientRect()
+                                          .height ?? 0
+                                    : 0,
+                            ]}
                             stroke="red"
                         ></Line>
                     </Layer>
                 </Stage>
-            );
-        }
-
-        return renderThis(
-            <>
-                {from || to ? (
-                    <>
-                        {" "}
-                        {from
-                            ? from.render("from", progress)
-                            : _renderPlaceholder()}
-                        {to ? to.render("to", progress) : _renderPlaceholder()}
-                    </>
-                ) : content ? (
-                    <>
-                        {arr.map((num) => {
-                            return <p key={num}>{content}</p>;
-                        })}
-                    </>
-                ) : (
-                    ""
-                )}
-                {renderSplitter()}
-            </>,
-        );
-    }
-
-    return <>{render()}</>;
+            </div>
+        </>
+    );
 }
 
 export default ModuleNode;
