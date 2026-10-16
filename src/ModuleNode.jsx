@@ -11,10 +11,15 @@ function ModuleNode({ obj } = props) {
         x: null,
         y: null,
     });
+    const [splitTarget, setSplitTarget] = useState(null);
     let thisNode = useRef(null);
 
-    const { parent, level, partition, from, to, content, children } = obj;
-    const willSplitVertically = level % 2 != 0; // Will split vertically if odd level
+    const { parent, level, partition, content, children, isVertical } = obj;
+    // const willSplitVertically = level % 2 != 0; // Will split vertically if odd level
+    const willSplitVertically = false;
+    const willSplitItself = parent
+        ? willSplitVertically !== parent.isVertical
+        : true;
     const min = 60;
 
     useEffect(() => {
@@ -34,14 +39,22 @@ function ModuleNode({ obj } = props) {
     const clamp = (val, min, max) => Math.min(Math.max(min, val), max);
     const _updateAnimVars = (ev) => {
         setMousePosition({ x: ev.clientX, y: ev.clientY });
-        if (willSplitVertically) {
+        if (willSplitItself) {
             setSplitterPosition({
                 x: 0,
-                y: clamp(ev.clientY - thisNode.current.getBoundingClientRect().top, min, thisNode.current.getBoundingClientRect().height - min),
+                y: clamp(
+                    ev.clientY - thisNode.current.getBoundingClientRect().top,
+                    min,
+                    thisNode.current.getBoundingClientRect().height - min,
+                ),
             });
         } else {
             setSplitterPosition({
-                x: clamp(ev.clientX - thisNode.current.getBoundingClientRect().left, min, thisNode.current.getBoundingClientRect().width - min),
+                x: clamp(
+                    ev.clientX - thisNode.current.getBoundingClientRect().left,
+                    min,
+                    thisNode.current.getBoundingClientRect().width - min,
+                ),
                 y: 0,
             });
         }
@@ -57,11 +70,17 @@ function ModuleNode({ obj } = props) {
     };
 
     let beginSplit = (e) => {
-        const enoughSpace = willSplitVertically ? thisNode.current.getBoundingClientRect().height > 2*min : thisNode.current.getBoundingClientRect().width > 2*min
+        if (willSplitItself) {
+        }
+
+        // const enoughSpace = willSplitVertically ? thisNode.current.getBoundingClientRect().height > 2*min : thisNode.current.getBoundingClientRect().width > 2*min
+        // setSplitTarget();
+        // console.log(e.target);
         e.preventDefault();
         e.stopPropagation();
 
-        if (!splitting && enoughSpace) {
+        if (!splitting) {
+            // if (!splitting && enoughSpace) {
             _updateAnimVars(e);
             setSplitting(true);
         }
@@ -69,23 +88,23 @@ function ModuleNode({ obj } = props) {
 
     let endSplit = () => {
         if (splitting) {
-            console.log(splitterPosition);
+            // console.log(splitterPosition);
             setSplitting(false);
-            obj.createChild(
-                "from",
-                `${level} : from`,
-                Math.round(
-                    willSplitVertically
-                        ? (splitterPosition.y * 100) /
-                              thisNode.current.getBoundingClientRect().height
-                        : (splitterPosition.x * 100) /
-                              thisNode.current.getBoundingClientRect().width
-                )
+            const newPartition = Math.round(
+                // false
+                //     ? (splitterPosition.y * 100) /
+                //           thisNode.current.getBoundingClientRect().height
+                (splitterPosition.x * partition) /
+                    thisNode.current.getBoundingClientRect().width,
             );
-            obj.createChild("to", `${level} : to`);
+            if (willSplitItself) {
+                obj.splitIt("a child", newPartition, 0);
+            } else {
+                obj.parent.splitIt("a child", newPartition, obj.getIndex() + 1);
+            }
         }
     };
-
+    
     return (
         <>
             <div
@@ -98,8 +117,13 @@ function ModuleNode({ obj } = props) {
             >
                 {children.length > 0 ? (
                     <>
-                        {children.map((child)=> {
-                            return (<ModuleNode key={child} obj={child}></ModuleNode>);
+                        {children.map((child) => {
+                            return (
+                                <ModuleNode
+                                    key={child.content + child.partition}
+                                    obj={child}
+                                ></ModuleNode>
+                            );
                         })}
                     </>
                 ) : (
@@ -117,13 +141,13 @@ function ModuleNode({ obj } = props) {
                             points={[
                                 0,
                                 0,
-                                willSplitVertically
-                                    ? thisNode.current?.getBoundingClientRect()
-                                          .width ?? 0
+                                willSplitItself
+                                    ? (thisNode.current?.getBoundingClientRect()
+                                          .width ?? 0)
                                     : 0,
-                                !willSplitVertically
-                                    ? thisNode.current?.getBoundingClientRect()
-                                          .height ?? 0
+                                !willSplitItself
+                                    ? (thisNode.current?.getBoundingClientRect()
+                                          .height ?? 0)
                                     : 0,
                             ]}
                             stroke="red"

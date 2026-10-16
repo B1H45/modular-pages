@@ -21,6 +21,7 @@
     position: relative;
     flex-basis: calc(1% * var(--partition));
     flex-shrink: 0;
+    background-color: hsl(calc(250 - var(--level) * 40), 50%, 50%);
 }
 
 .module.end {
