@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { Stage, Layer, Line } from "react-konva";
 
-function ModuleNode({ obj } = props) {
+function ModuleNode({ obj, splitFunc: dispatchTree } = props) {
     let [splitting, setSplitting] = useState(false);
     const [mousePosition, setMousePosition] = useState({
         x: null,
@@ -39,7 +39,7 @@ function ModuleNode({ obj } = props) {
     const clamp = (val, min, max) => Math.min(Math.max(min, val), max);
     const _updateAnimVars = (ev) => {
         setMousePosition({ x: ev.clientX, y: ev.clientY });
-        if (willSplitItself) {
+        if (willSplitVertically) {
             setSplitterPosition({
                 x: 0,
                 y: clamp(
@@ -97,14 +97,32 @@ function ModuleNode({ obj } = props) {
                 (splitterPosition.x * partition) /
                     thisNode.current.getBoundingClientRect().width,
             );
+
+            //Splitting itself
             if (willSplitItself) {
-                obj.splitIt("a child", newPartition, 0);
+                dispatchTree({
+                    type: "split_it",
+                    partition: newPartition,
+                    childContent: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false }),
+                    index: 0,
+                    currentNode: obj
+                });
+                // obj.splitIt("a child", newPartition, 0);
+
+            // Splitting parent
             } else {
-                obj.parent.splitIt("a child", newPartition, obj.getIndex() + 1);
+                dispatchTree({
+                    type: "split_it",
+                    partition: newPartition,
+                    childContent: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false }),
+                    index: obj.getIndex() + 1,
+                    currentNode: obj.parent
+                });
+                // obj.parent.splitIt("a child", newPartition, obj.getIndex() + 1);
             }
         }
     };
-    
+
     return (
         <>
             <div
@@ -115,13 +133,14 @@ function ModuleNode({ obj } = props) {
                 className={thisClass}
                 style={thisStyle}
             >
-                {children.length > 0 ? (
+                {children?.length > 0 ? (
                     <>
                         {children.map((child) => {
                             return (
                                 <ModuleNode
                                     key={child.content + child.partition}
                                     obj={child}
+                                    splitFunc={dispatchTree}
                                 ></ModuleNode>
                             );
                         })}
@@ -141,11 +160,11 @@ function ModuleNode({ obj } = props) {
                             points={[
                                 0,
                                 0,
-                                willSplitItself
+                                willSplitVertically
                                     ? (thisNode.current?.getBoundingClientRect()
                                           .width ?? 0)
                                     : 0,
-                                !willSplitItself
+                                !willSplitVertically
                                     ? (thisNode.current?.getBoundingClientRect()
                                           .height ?? 0)
                                     : 0,

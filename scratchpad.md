@@ -26,3 +26,5 @@ Looks like I'm gonna solve it with useSyncExternalStore hook
 https://chatgpt.com/share/e/6ad066e3-f66c-83e8-96f7-da9dd5b2db99
 
 actually no reducer and state
+
+I think reducer is actually for whole tree
