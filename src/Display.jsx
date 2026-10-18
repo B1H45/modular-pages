@@ -84,7 +84,7 @@ function Display() {
 
         //currentNode describes what will become the parent of whatever children are getting made
 
-        // partition describes the partition into 
+        //partition describes the partition into 
 
         //Index describes the future position of the new child to be created
         const { currentNode, childContent, partition, index, type } = action;
@@ -103,6 +103,9 @@ function Display() {
                         currentNode.children[index - 1].partition - partition,
                         0,
                     );
+
+                    console.log(currentNode.children[index-1].partition);
+
                     currentNode.children[index - 1].partition = partition;
                     child = createModuleNode(
                         newNodePartition,
@@ -112,7 +115,6 @@ function Display() {
                     );
                     currentNode.children.splice(index, 0, child);
                     newChildrenArray.splice(index, 0, child);
-
                     
                 // Initial split (parent keeps its content on left child, add new node on the right)
                 } else if (currentNode.children.length <= 0) {
