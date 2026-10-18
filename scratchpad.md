@@ -28,3 +28,10 @@ https://chatgpt.com/share/e/6ad066e3-f66c-83e8-96f7-da9dd5b2db99
 actually no reducer and state
 
 I think reducer is actually for whole tree
+
+I need to start by creating a whole new copy of this tree
+- cause a child can't find itself in it's parent's children
+- meaning the parent it's holding is outdated
+- cause we made parent = currentNode, then copied the tree including currentNode
+
+I should be using IDs for storing parents rather then objects. This makes working immutably easier

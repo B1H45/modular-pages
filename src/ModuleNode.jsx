@@ -105,7 +105,7 @@ function ModuleNode({ obj, splitFunc: dispatchTree } = props) {
                     partition: newPartition,
                     childContent: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false }),
                     index: 0,
-                    currentNode: obj
+                    currentNodeId: obj.id
                 });
                 // obj.splitIt("a child", newPartition, 0);
 
@@ -116,7 +116,7 @@ function ModuleNode({ obj, splitFunc: dispatchTree } = props) {
                     partition: newPartition,
                     childContent: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false }),
                     index: obj.getIndex() + 1,
-                    currentNode: obj.parent
+                    currentNodeId: obj.id
                 });
                 // obj.parent.splitIt("a child", newPartition, obj.getIndex() + 1);
             }
