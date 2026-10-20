@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useReducer } from "react";
 import ModuleNode from "./ModuleNode";
 import { Stage, Layer, Line } from "react-konva";
 import "./styles/App.css";
+import {useImmer} from "use-immer";
 
 function Display() {
     let idTracker = useRef(0);
