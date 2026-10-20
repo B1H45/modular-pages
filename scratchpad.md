@@ -35,3 +35,7 @@ I need to start by creating a whole new copy of this tree
 - cause we made parent = currentNode, then copied the tree including currentNode
 
 I should be using IDs for storing parents rather then objects. This makes working immutably easier
+
+https://react.dev/learn/updating-objects-in-state
+
+I think I need immer

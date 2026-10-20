@@ -21,14 +21,14 @@ function Display() {
             })(),
             isLast() {
                 return (
-                    node.parent?.children.indexOf(node) ==
-                        node.parent?.children.length - 1 ?? true
+                    tree.getNode(node.parent?.id)?.children?.length - 1 ==
+                        tree.getNode(node.id)?.getIndex() ?? true
                 );
             },
-
-            //gets index within it's parent's children list
             getIndex() {
-                return node.parent?.children.indexOf(node);
+                return (
+                    tree.getNode(node.parent?.id)?.children?.indexOf(node) ?? 0
+                );
             },
         };
 
@@ -44,6 +44,16 @@ function Display() {
             getNode(id) {
                 return this.nodes.find((node) => node.id === id);
             },
+            refreshNodeContents(nodes) {
+                for (const node of nodes) {
+                    const index = this.nodes.findIndex((n) => n.id === node.id);
+                    if (index !== -1) {
+                        this.nodes[index] = node;
+                    } else {
+                        this.nodes.push(node);
+                    }
+                }
+            },
         };
 
         return tree;
@@ -51,7 +61,6 @@ function Display() {
 
     function treeReducer(state, action) {
         const tree = state;
-
         //currentNode describes what will become the parent of whatever children are getting made
 
         //partition describes the partition into
@@ -59,30 +68,31 @@ function Display() {
         //Index describes the future position of the new child to be created
         const { currentNodeId, childContent, partition, index, type } = action;
 
-        const currentNode = currentNodeId;
-        const newTree = { ...tree };
-
         switch (type) {
             case "split_it":
+                const newTree = { ...tree };
+                const newCurrentNode = newTree.getNode(currentNodeId);
+                let newChildrenArray = [...newCurrentNode.children];
+
                 let child;
-                let newChildrenArray = [...tree.children];
 
                 // Additional splits (splitting off of the thing to the left of the index so if we split 5, we're taking 4 and cutting it and the cut off bit becomes the new 5. The old 5 shifts to 6
-                if (currentNode.children?.length > 0 && index - 1 >= 0) {
+                if (newCurrentNode.children?.length > 0 && index - 1 >= 0) {
                     let prevsWidths = 0;
                     for (let i = 0; i < index; i++) {
-                        prevsWidths += currentNode.children[i].partition;
+                        prevsWidths += newCurrentNode.children[i].partition;
                     }
                     const newNodePartition = Math.max(
-                        currentNode.children[index - 1].partition - partition,
+                        newCurrentNode.children[index - 1].partition -
+                            partition,
                         0,
                     );
 
                     // currentNode.children[index - 1].partition = partition;
                     child = createModuleNode(
                         newNodePartition,
-                        currentNode.level + 1,
-                        currentNode.id,
+                        newCurrentNode.level + 1,
+                        newCurrentNode,
                         childContent,
                     );
                     // currentNode.children.splice(index, 0, child);
@@ -90,58 +100,53 @@ function Display() {
                     newChildrenArray.splice(index, 0, child);
 
                     // Initial split (parent keeps its content on left child, add new node on the right)
-                } else if (currentNode.children.length <= 0) {
-                    currentNode.isVertical = currentNode.parent
-                        ? !currentNode.parent.isVertical
+                } else if (newCurrentNode.children.length <= 0) {
+                    newCurrentNode.isVertical = newCurrentNode.parent
+                        ? !newCurrentNode.parent.isVertical
                         : false;
                     child = createModuleNode(
                         partition,
-                        currentNode.level + 1,
-                        currentNode.id,
-                        currentNode.content,
+                        newCurrentNode.level + 1,
+                        newCurrentNode,
+                        newCurrentNode.content,
                     );
                     const child2 = createModuleNode(
                         100 - partition,
-                        currentNode.level + 1,
-                        currentNode.id,
+                        newCurrentNode.level + 1,
+                        newCurrentNode,
                         childContent,
                     );
-                    // currentNode.children.splice(0, 0, child);
-                    // currentNode.children.splice(1, 0, child2);
+
+                    // newCurrentNode.children.splice(0, 0, child);
+                    // newCurrentNode.children.splice(1, 0, child2);
                     newChildrenArray[0] = child;
                     newChildrenArray[1] = child2;
                 }
-                return { ...tree, children: newChildrenArray };
+
+                newTree.refreshNodeContents([
+                    newCurrentNode,
+                    ...newChildrenArray,
+                ]);
+                newCurrentNode.children = [...newChildrenArray];
+
+                return newTree;
             case "clear_children":
-                currentNode.children = [];
+                newCurrentNode.children = [];
         }
     }
 
     const [tree, dispatchTree] = useReducer(
         treeReducer,
-        createModuleNode(100, 0, null, "Hello", false),
+        createTree(createModuleNode(100, 0, null, "Root", false)),
     );
-
-    console.log(tree);
-
-    // useEffect(() => {
-    //     dispatchTree({
-    //         type: "split_it",
-    //         partition: 50,
-    //         childContent: "Thing",
-    //         index: 0,
-    //     });
-
-    //     return () => {
-    //         dispatchTree({
-    //             type: "clear_children"
-    //         })
-    //     }
-    // }, []);
 
     return (
         <>
-            <ModuleNode obj={tree} splitFunc={dispatchTree}></ModuleNode>
+            <ModuleNode
+                obj={tree.root}
+                tree={tree}
+                splitFunc={dispatchTree}
+            ></ModuleNode>
         </>
     );
 }

@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { Stage, Layer, Line } from "react-konva";
 
-function ModuleNode({ obj, splitFunc: dispatchTree } = props) {
+function ModuleNode({ obj, splitFunc: dispatchTree,  } = props) {
     let [splitting, setSplitting] = useState(false);
     const [mousePosition, setMousePosition] = useState({
         x: null,
@@ -14,11 +14,15 @@ function ModuleNode({ obj, splitFunc: dispatchTree } = props) {
     const [splitTarget, setSplitTarget] = useState(null);
     let thisNode = useRef(null);
 
-    const { parent, level, partition, content, children, isVertical } = obj;
+    const { parent, level, partition, content, children, isVertical, id } = obj;
+
+    const parentNode = parent;
+
     // const willSplitVertically = level % 2 != 0; // Will split vertically if odd level
     const willSplitVertically = false;
-    const willSplitItself = parent
-        ? willSplitVertically !== parent.isVertical
+
+    const willSplitItself = parentNode
+        ? willSplitVertically !== parentNode.isVertical
         : true;
     const min = 60;
 
@@ -75,7 +79,6 @@ function ModuleNode({ obj, splitFunc: dispatchTree } = props) {
 
         // const enoughSpace = willSplitVertically ? thisNode.current.getBoundingClientRect().height > 2*min : thisNode.current.getBoundingClientRect().width > 2*min
         // setSplitTarget();
-        // console.log(e.target);
         e.preventDefault();
         e.stopPropagation();
 
@@ -88,7 +91,6 @@ function ModuleNode({ obj, splitFunc: dispatchTree } = props) {
 
     let endSplit = () => {
         if (splitting) {
-            // console.log(splitterPosition);
             setSplitting(false);
             const newPartition = Math.round(
                 // false
@@ -116,9 +118,8 @@ function ModuleNode({ obj, splitFunc: dispatchTree } = props) {
                     partition: newPartition,
                     childContent: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false }),
                     index: obj.getIndex() + 1,
-                    currentNodeId: obj.id
+                    currentNodeId: parentNode.id
                 });
-                // obj.parent.splitIt("a child", newPartition, obj.getIndex() + 1);
             }
         }
     };
@@ -138,7 +139,7 @@ function ModuleNode({ obj, splitFunc: dispatchTree } = props) {
                         {children.map((child) => {
                             return (
                                 <ModuleNode
-                                    key={child.content + child.partition}
+                                    key={id}
                                     obj={child}
                                     splitFunc={dispatchTree}
                                 ></ModuleNode>
@@ -146,7 +147,7 @@ function ModuleNode({ obj, splitFunc: dispatchTree } = props) {
                         })}
                     </>
                 ) : (
-                    <div>{content}</div>
+                    <div>{id}</div>
                 )}
                 <Stage
                     className={`splitter${!splitting ? " hide" : ""}`}
