@@ -3,6 +3,9 @@ import ModuleNode from "./ModuleNode";
 import { Stage, Layer, Line } from "react-konva";
 import "./styles/App.css";
 
+import { create } from "mutative";
+import { useMutativeReducer } from "use-mutative";
+
 function Display() {
     class moduleNode {
         constructor(partition, level, parent, content, isVertical) {
@@ -78,12 +81,9 @@ function Display() {
         }
     }
 
-    const [root, setRoot] = useState(new moduleNode(100, 0, null, "Hello"));
-    useEffect(() => {
-        const newRoot = structuredClone(root);
-        newRoot.splitIt("Child 1", 20, 0, true);
-        setRoot(newRoot);
-    }, []);
+
+    const [treeState, dispatchTree] = useMutativeReducer(treeReducer, new moduleNode(100, 0, null, "Hello"));
+
 
     return (
         <>

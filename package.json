@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "konva": "^10.7.0",
+    "mutative": "^2.0.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-konva": "^19.3.0"
