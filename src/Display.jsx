@@ -4,9 +4,11 @@ import { Stage, Layer, Line } from "react-konva";
 import "./styles/App.css";
 
 import { create } from "mutative";
-import { useMutativeReducer } from 'use-mutative';
+import { useMutativeReducer } from "use-mutative";
 
 function Display() {
+    let idTracker = useRef(0);
+
     class moduleNode {
         constructor(partition, level, parent, content, isVertical) {
             this.partition = partition;
@@ -189,14 +191,16 @@ function Display() {
         }
     }
 
+    const tree = createTree(createModuleNode(100, 0, null, "Root", false));
+
     const [treeState, dispatchTree] = useMutativeReducer(
         treeReducer,
-        createTree(createModuleNode(100, 0, null, "Root", false)),
+        tree,
     );
 
     return (
         <>
-            <ModuleNode obj={root}></ModuleNode>
+            <ModuleNode obj={tree.root}></ModuleNode>
         </>
     );
 }
