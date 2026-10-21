@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { Stage, Layer, Line } from "react-konva";
 
-function ModuleNode({ obj } = props) {
+function ModuleNode({ obj, dispatchTree } = props) {
     let [splitting, setSplitting] = useState(false);
     const [mousePosition, setMousePosition] = useState({
         x: null,
@@ -98,9 +98,9 @@ function ModuleNode({ obj } = props) {
                     thisNode.current.getBoundingClientRect().width,
             );
             if (willSplitItself) {
-                obj.splitIt("a child", newPartition, 0);
+                dispatchTree({ type: "split", obj, newPartition });
             } else {
-                obj.parent.splitIt("a child", newPartition, obj.getIndex() + 1);
+                dispatchTree({ type: "split", obj: obj.parent, newPartition });
             }
         }
     };
@@ -122,6 +122,7 @@ function ModuleNode({ obj } = props) {
                                 <ModuleNode
                                     key={child.content + child.partition}
                                     obj={child}
+                                    dispatchTree={dispatchTree}
                                 ></ModuleNode>
                             );
                         })}

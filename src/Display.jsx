@@ -4,7 +4,7 @@ import { Stage, Layer, Line } from "react-konva";
 import "./styles/App.css";
 
 import { create } from "mutative";
-import { useMutativeReducer } from "use-mutative";
+import { useMutativeReducer } from 'use-mutative';
 
 function Display() {
     class moduleNode {
@@ -81,9 +81,118 @@ function Display() {
         }
     }
 
+    function createModuleNode(partition, level, parent, content, isVertical) {
+        const node = {
+            partition,
+            parent,
+            children: [],
+            level,
+            content,
+            isVertical,
+            id: (() => {
+                const returnId = idTracker.current;
+                idTracker.current = idTracker.current + 1;
+                return returnId;
+            })(),
+            isLast() {
+                return (
+                    tree.getNode(node.parent?.id)?.children?.length - 1 ==
+                        tree.getNode(node.id)?.getIndex() ?? true
+                );
+            },
+            getIndex() {
+                return (
+                    tree.getNode(node.parent?.id)?.children?.indexOf(node) ?? 0
+                );
+            },
+        };
 
-    const [treeState, dispatchTree] = useMutativeReducer(treeReducer, new moduleNode(100, 0, null, "Hello"));
+        return node;
+    }
 
+    function createTree(root) {
+        const tree = {
+            root,
+
+            //get an object by its id
+            getNode(id, node = this.root) {
+                if (!node) return undefined;
+                if (node.id === id) return node;
+
+                for (const child of node.children) {
+                    const result = this.getNode(id, child);
+                    if (result) return result;
+                }
+
+                return undefined;
+            },
+            refreshNodeContents(nodes) {
+                for (const node of nodes) {
+                    const index = this.nodes.findIndex((n) => n.id === node.id);
+                    if (index !== -1) {
+                        this.nodes[index] = node;
+                    } else {
+                        this.nodes.push(node);
+                    }
+                }
+            },
+        };
+
+        return tree;
+    }
+
+    function treeReducer(draft, action) {
+        switch (action.type) {
+            case "split":
+                const { obj, newPartition } = action;
+                const node = draft.getNode(obj.id);
+                let child;
+
+                if (node.children.length > 0) {
+                    let prevsWidths = 0;
+                    for (let i = 0; i < index; i++) {
+                        prevsWidths += node.children[i].partition;
+                    }
+                    const newNodePartition = Math.max(
+                        node.children[index - 1].partition - newPartition,
+                        0,
+                    );
+                    node.children[index - 1].partition = partition;
+                    child = createModuleNode(
+                        newNodePartition,
+                        node.level + 1,
+                        node,
+                        childContent,
+                    );
+                    node.children.splice(index, 0, child);
+                } else {
+                    node.isVertical = node.parent
+                        ? !node.parent.isVertical
+                        : false;
+                    child = createModuleNode(
+                        newPartition,
+                        node.level + 1,
+                        node,
+                        node.content,
+                    );
+                    const child2 = createModuleNode(
+                        100 - newPartition,
+                        node.level + 1,
+                        node,
+                        childContent,
+                    );
+                    node.children.splice(0, 0, child);
+                    node.children.splice(1, 0, child2);
+                }
+
+                return;
+        }
+    }
+
+    const [treeState, dispatchTree] = useMutativeReducer(
+        treeReducer,
+        createTree(createModuleNode(100, 0, null, "Root", false)),
+    );
 
     return (
         <>
