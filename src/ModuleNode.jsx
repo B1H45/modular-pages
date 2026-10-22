@@ -39,7 +39,7 @@ function ModuleNode({ obj, dispatchTree } = props) {
     const clamp = (val, min, max) => Math.min(Math.max(min, val), max);
     const _updateAnimVars = (ev) => {
         setMousePosition({ x: ev.clientX, y: ev.clientY });
-        if (willSplitItself) {
+        if (willSplitVertically) {
             setSplitterPosition({
                 x: 0,
                 y: clamp(
@@ -98,9 +98,9 @@ function ModuleNode({ obj, dispatchTree } = props) {
                     thisNode.current.getBoundingClientRect().width,
             );
             if (willSplitItself) {
-                dispatchTree({ type: "split", obj, newPartition });
+                dispatchTree({ type: "split", obj, newPartition, index: 0, childContent: new Date().toLocaleTimeString([], { minute: "2-digit", second: "2-digit" }) });
             } else {
-                dispatchTree({ type: "split", obj: obj.parent, newPartition });
+                dispatchTree({ type: "split", obj: obj.parent, newPartition, index: obj.getIndex()+1, childContent: new Date().toLocaleTimeString([], { minute: "2-digit", second: "2-digit" }) });
             }
         }
     };
@@ -120,7 +120,7 @@ function ModuleNode({ obj, dispatchTree } = props) {
                         {children.map((child) => {
                             return (
                                 <ModuleNode
-                                    key={child.content + child.partition}
+                                    key={child.id}
                                     obj={child}
                                     dispatchTree={dispatchTree}
                                 ></ModuleNode>
@@ -142,11 +142,11 @@ function ModuleNode({ obj, dispatchTree } = props) {
                             points={[
                                 0,
                                 0,
-                                willSplitItself
+                                willSplitVertically
                                     ? (thisNode.current?.getBoundingClientRect()
                                           .width ?? 0)
                                     : 0,
-                                !willSplitItself
+                                !willSplitVertically
                                     ? (thisNode.current?.getBoundingClientRect()
                                           .height ?? 0)
                                     : 0,

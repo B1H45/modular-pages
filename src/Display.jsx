@@ -98,13 +98,13 @@ function Display() {
             })(),
             isLast() {
                 return (
-                    tree.getNode(node.parent?.id)?.children?.length - 1 ==
-                        tree.getNode(node.id)?.getIndex() ?? true
+                    treeState.getNode(node.parent?.id)?.children?.length - 1 ==
+                        node.getIndex() ?? true
                 );
             },
             getIndex() {
                 return (
-                    tree.getNode(node.parent?.id)?.children?.indexOf(node) ?? 0
+                    treeState.getNode(node.parent?.id)?.children?.indexOf(node) ?? 0
                 );
             },
         };
@@ -119,13 +119,13 @@ function Display() {
             //get an object by its id
             getNode(id, node = this.root) {
                 if (!node) return undefined;
+
                 if (node.id === id) return node;
 
                 for (const child of node.children) {
                     const result = this.getNode(id, child);
                     if (result) return result;
                 }
-
                 return undefined;
             },
             refreshNodeContents(nodes) {
@@ -146,7 +146,7 @@ function Display() {
     function treeReducer(draft, action) {
         switch (action.type) {
             case "split":
-                const { obj, newPartition } = action;
+                const { obj, newPartition, childContent, index } = action;
                 const node = draft.getNode(obj.id);
                 let child;
 
@@ -159,7 +159,7 @@ function Display() {
                         node.children[index - 1].partition - newPartition,
                         0,
                     );
-                    node.children[index - 1].partition = partition;
+                    node.children[index - 1].partition = newPartition;
                     child = createModuleNode(
                         newNodePartition,
                         node.level + 1,
@@ -193,14 +193,14 @@ function Display() {
 
     const tree = createTree(createModuleNode(100, 0, null, "Root", false));
 
-    const [treeState, dispatchTree] = useMutativeReducer(
-        treeReducer,
-        tree,
-    );
+    const [treeState, dispatchTree] = useMutativeReducer(treeReducer, tree);
 
     return (
         <>
-            <ModuleNode obj={tree.root}></ModuleNode>
+            <ModuleNode
+                obj={treeState.root}
+                dispatchTree={dispatchTree}
+            ></ModuleNode>
         </>
     );
 }
